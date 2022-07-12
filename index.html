@@ -1,0 +1,86 @@
+<!DOCTYPE HTML>
+<html>
+<div>
+  Count: <span id="count"></span>
+</div>
+
+<div id="controls">
+  <div><button id="btnAdd">Add Record</button></div>
+  <div><button id="btnSync">Sync</button></div>
+  <div><button id="btnVersionCheck">Check Version</button></div>
+  <div><button id="btnDropDb">Drop DB</button></div>
+</div>
+
+
+<div>
+
+  <ul id="recordList">
+  </ul>
+
+</div>
+
+<script>
+
+var btnAdd  = document.querySelector("#btnAdd"),
+    btnSync = document.querySelector("#btnSync"),
+    btnVersionCheck = document.querySelector("#btnVersionCheck"),
+    ulRecordList = document.querySelector("#recordList");
+    spanCount = document.querySelector("#count"),
+    btnDropDb = document.querySelector("#btnDropDb");
+
+btnAdd.addEventListener("click", btnAdd_clicked);
+
+refreshUI();
+
+
+// Add a record to the database
+function btnAdd_clicked() {
+  var currentCount = getCount();
+  var recordName = 'record' + currentCount + 1;
+  var data = 'a'.repeat(5000);
+  localStorage.setItem(recordName,
+                       '{"capacity": 1, "data": "' + data + '"}'
+  );
+
+  refreshUI();
+}
+
+// Lookup storage items
+function refreshUI() {
+  refreshCount();
+  refreshList();
+}
+
+
+function refreshCount() {
+  spanCount.innerHTML = getCount();
+}
+
+function refreshList() {
+  if (getCount() === 0) {
+    var listContents = "<li>No Records</li>";
+    ulRecordList.innerHTML = listContents;
+  }
+
+}
+
+function getCount() {
+  return localStorage.length;
+}
+
+// Sync local data with web app
+function btnSync_clicked() {
+
+}
+
+function btnDropDb_clicked() {
+  localstorage.clear();
+}
+// Check to see if we're using the latest version of the front-end
+function btnVersionCheck_clicked() {
+
+}
+
+</script>
+</html>
+
