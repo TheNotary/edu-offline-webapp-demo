@@ -9,7 +9,13 @@ tl; dr, this is a demo for an app that allows a user to work with a system's dat
 # Usage
 
 ###### Installation
-Login to the app while the node server is running to install the "Service Worker" and cache the data locally.  You'll need to login with...
+First, run the webserver in the root of this git repo:
+
+```
+ruby -run -e httpd .
+```
+
+Then login to the app while the node server is running to install the "Service Worker" and cache the data locally.  You'll need to login with...
 
 ```
 UserName: demo
@@ -23,5 +29,3 @@ Then shutdown the node application and refresh the browser.  The web app will in
 
 ###### Synchronization With Backend
 Now to prove the offline/ online capabilities of the demo, you'll want to start the node service.  Click the "Attempt Reconnection" button to allow the web application to connected to the backend.  You will be prompted to synchronize the offline interactions with the backend.
-
-
