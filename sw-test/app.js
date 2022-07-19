@@ -11,9 +11,9 @@ var btnAdd  = document.querySelector("#btnAdd"),
     spanCacheDate = document.querySelector("#cacheDate"),
     btnDropDb = document.querySelector("#btnDropDb");
 
-
 btnVersionCheck.addEventListener("click", refreshAppVersion);
 btnAdd.addEventListener("click", btnAdd_clicked);
+
 
 refreshUI();
 

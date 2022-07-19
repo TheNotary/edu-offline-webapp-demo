@@ -8,8 +8,8 @@ tl; dr, this is a demo for an app that allows a user to work with a system's dat
 # TODO
 
 x Implement offline browsing
-- Get caching figured out such that you can bump the version to bust the cache
-- Get some indication whether you have loaded the latest version
+x Get caching figured out such that you can bump the version to bust the cache
+x Get some indication whether you have loaded the latest version
 - Implement the database in UMD
 - Investigate what it's like when chrome needs to grow beyond the 5mb soft cap
 - Implement a backend that syncs... I guess attach mongodb to the system...
