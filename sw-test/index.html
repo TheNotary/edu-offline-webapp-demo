@@ -1,15 +1,19 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<script src="/sw-test/umd.js"></script>
+<!-- <script src="/sw-test/umd.js"></script> -->
 <script src="/sw-test/sw.js"></script>
 <link rel="shortcut icon" href="/sw-test/favicon.ico" />
 </head>
 
+<script type="module">
+
+</script>
+
 <body>
 <div>
   <div>
-    App Version: <span id="version">1.0.2</span>
+    App Version: <span id="version"></span> cached on <span id="cacheDate"></span>
   </div>
   <div>
     Count: <span id="count"></span>
@@ -28,8 +32,8 @@
   </ul>
 </div>
 
-z
 </body>
-<script src="/sw-test/app.js"></script>
+
+<script type="module" src="/sw-test/app.js"></script>
 
 </html>
