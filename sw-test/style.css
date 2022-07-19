@@ -1,0 +1,12 @@
+div#divTotalCapacity:empty
+div#divTotalCapacity:empty ~ {
+  display: none;
+}
+
+#divTotalCapacity::before {
+   content: "Total Capacity: ";
+}
+
+li {
+  list-style: none;
+}
