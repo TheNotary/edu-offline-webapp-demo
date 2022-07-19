@@ -1,0 +1,19 @@
+{
+  "name": "edu-offline-website-demo",
+  "version": "1.0.0",
+  "description": "Imagine that you're building an app for auditors who need to inspect inventory at a location where they will have access to their laptop, but they won't be able to connect to the internet.  In such a situation, you might want to consider using Service Workers and Web Storage to create a user experience that allows your users to work with data offline and synchronize their work with the backend when they're in a location with connectivity.",
+  "main": "backend.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheNotary/edu-offline-website-demo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TheNotary/edu-offline-website-demo/issues"
+  },
+  "homepage": "https://github.com/TheNotary/edu-offline-website-demo#readme"
+}

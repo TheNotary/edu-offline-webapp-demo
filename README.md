@@ -10,9 +10,11 @@ tl; dr, this is a demo for an app that allows a user to work with a system's dat
 x Implement offline browsing
 x Get caching figured out such that you can bump the version to bust the cache
 x Get some indication whether you have loaded the latest version
-- Implement the database in UMD
-- Investigate what it's like when chrome needs to grow beyond the 5mb soft cap
+x Implement the database in idb-keyval
+x Investigate what it's like when chrome needs to grow beyond the 5mb soft cap
 - Implement a backend that syncs... I guess attach mongodb to the system...
+  - Build a backend
+  - Build some JS to post records to the backend that need syncing
 
 
 # Usage
@@ -38,6 +40,28 @@ Then shutdown the node application and refresh the browser.  The web app will in
 
 ###### Synchronization With Backend
 Now to prove the offline/ online capabilities of the demo, you'll want to start the node service.  Click the "Attempt Reconnection" button to allow the web application to connected to the backend.  You will be prompted to synchronize the offline interactions with the backend.
+
+
+
+
+
+# Usage (with backend)
+
+Start mongo DB with unsafe username/ passwords
+
+```
+docker run \
+	-e MONGO_INITDB_ROOT_USERNAME=mongoadmin \
+	-e MONGO_INITDB_ROOT_PASSWORD=secret \
+	mongo
+```
+
+Start the backend server using node.  
+
+
+
+
+
 
 # Implementation Notes
 

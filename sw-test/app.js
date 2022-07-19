@@ -21,6 +21,8 @@ let btnAdd = document.querySelector("#btnAdd"),
 btnVersionCheck.addEventListener("click", refreshAppVersion);
 btnAdd.addEventListener("click", btnAdd_clicked);
 btnDropDb.addEventListener("click", btnDropDb_clicked);
+btnSync.addEventListener("click", btnSync_clicked);
+
 
 refreshUI();
 
@@ -33,7 +35,7 @@ async function btnAdd_clicked() {
     let data = 'a'.repeat(500000);  // Make the records pretty big to test application size limits in the browser
 
     console.log(`Creating new record with name ${recordName}`);
-    set(recordName, '{"capacity": 1, "checked": false, "data": "' + data + '"}');
+    set(recordName, '{"capacity": 1, "checked": false, "unsynced": false, "data": "' + data + '"}');
 
     refreshUI();
 }
@@ -98,10 +100,12 @@ async function refreshList() {
             for (const entry of entries) {
                 const key = entry[0];
                 const data = JSON.parse(entry[1]);
-                const checkStatus = true ? "checked" : "";
-                const checkbox = `<input type="checkbox" class="checkable" id="${key}-checkbox" name="${key}-checkbox" ${checkStatus}>`;
+                const checkStatus = data["checked"] ? "checked" : "";
+                const syncStatus = data["unsynced"] ? " (unsynced)" : "";
+                const onchangeJs = `onchange="chk(event,'${key}')"`;
+                const checkboxHtml = `<input type="checkbox" ${onchangeJs} class="checkable" id="${key}-checkbox" name="${key}-checkbox" ${checkStatus}>`;
 
-                listContents += `<li>${key} - capacity ${data["capacity"]} ${checkbox}</li>`;
+                listContents += `<li>${key}${syncStatus} - capacity ${data["capacity"]} ${checkboxHtml}</li>`;
             }
             ulRecordList.innerHTML = listContents;
         });
@@ -132,6 +136,8 @@ async function getCount() {
 
 // Sync local data with web app
 function btnSync_clicked() {
+    alert('TODO: sync the db stuff');
+
 
 }
 
@@ -140,7 +146,6 @@ function btnDropDb_clicked() {
     clear();
     refreshUI();
 }
-
 
 // Cleans up and returns the semver version to be printed on the screen, or
 // returns an error message that is printed to the screen
@@ -152,4 +157,16 @@ function cleanSemver(text) {
         return "INVALID VERSION FORMAT"
 
     return semVer[0];
+}
+
+// auditCheck, this function is fired anytime a record is "checked" meaning an
+// auditor has performed their auditing function on it, perhaps offline!
+window.chk = async (event, recordId) => {
+    const record = await get(recordId);
+    const obj = JSON.parse(record);
+    obj["checked"] = event.target.checked;
+    obj["unsynced"] = true;
+    // console.log("event.target.checked: " + event.target.checked);
+    set(recordId, JSON.stringify(obj));
+    refreshList();
 }
