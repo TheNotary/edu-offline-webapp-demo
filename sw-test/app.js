@@ -8,9 +8,9 @@ var btnAdd  = document.querySelector("#btnAdd"),
     ulRecordList = document.querySelector("#recordList"),
     spanVersion = document.querySelector("#version"),
     spanCount = document.querySelector("#count"),
+    spanCacheDate = document.querySelector("#cacheDate"),
     btnDropDb = document.querySelector("#btnDropDb");
 
-  window.spanV = spanVersion;
 
 btnVersionCheck.addEventListener("click", refreshAppVersion);
 btnAdd.addEventListener("click", btnAdd_clicked);
@@ -41,10 +41,36 @@ async function btnAdd_clicked() {
 }
 
 // Lookup storage items
-function refreshUI() {
-  refreshAppVersion();
+async function refreshUI() {
+  window.appVersion = await refreshAppVersion();
+  refreshCacheTime(appVersion);
   refreshCount();
   refreshList();
+}
+
+// Check to see if we're using the latest version of the front-end
+async function refreshAppVersion() {
+  return new Promise( resolve => {
+    fetch("/sw-test/version")
+      .then( response => response.text() )
+      .then( text => {
+        let version = cleanSemver(text);
+        spanVersion.innerHTML = version;
+        resolve(version);
+      });
+  });
+}
+
+async function refreshCacheTime(appVersion) {
+  const cache = await caches.open(appVersion);
+  const resp = await cache.match('/time-cached');
+
+  if (resp == undefined) {
+    setTimeout( _ => { refreshCacheTime(appVersion) }, 200);  // recursively retry until the cache is actually populated
+    return;
+  }
+  const timeCached = await resp.text();
+  spanCacheDate.innerHTML = timeCached;
 }
 
 async function refreshCount() {
@@ -73,14 +99,7 @@ function btnDropDb_clicked() {
   // localstorage.clear();
   clear();
 }
-// Check to see if we're using the latest version of the front-end
-async function refreshAppVersion() {
-  fetch("/sw-test/version")
-    .then( response => response.text() )
-    .then( text => {
-      spanV.innerHTML = cleanSemver(text);
-    } );
-}
+
 
 // Cleans up and returns the semver version to be printed on the screen, or
 // returns an error message that is printed to the screen
