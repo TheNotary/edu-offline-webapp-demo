@@ -30,7 +30,7 @@ app.route('/health').get(function(req, res) {
     res.send("up");
 });
 
-app.route('/setup').get(function(req, res) {
+app.route('/setup').post(function(req, res) {
     console.log("Responding to /setup");
 
     MongoClient.connect(url, function(err, mongoclient) {
@@ -46,28 +46,18 @@ app.route('/records').get(function(req, res) {
     });
 });
 
+app.route('/records/:id').post(function(req, res) {
+    console.log("Responding to POST /records/" + req.params.id);
+    const _id = req.params.id;
+
+    updateRecord(_id, req, res);
+});
+
 app.route('/records').post(function(req, res) {
     console.log("Responding to POST /records");
-
-    var newRecord = {
-        capacity: req.body.capacity,
-        checked: req.body.checked,
-        data: req.body.data
-    };
     var _id = req.body._id;
 
-    MongoClient.connect(url, function(err, mongoclient) {
-        mongoclient
-            .db(databaseName)
-            .collection(collectionName)
-            .replaceOne(
-                { _id },
-                newRecord
-            ).then( _ => {
-                mongoclient.close();
-                res.send("ok");
-            });
-    });
+    updateRecord(_id, req, res);
 });
 
 app.route('/records/count').get(function(req, res) {
@@ -78,11 +68,30 @@ app.route('/records/count').get(function(req, res) {
     });
 });
 
-
 var server = app.listen(3000, function() {
     console.log("Listening on port 3000");
 });
 
+async function updateRecord(_id, req, res) {
+    var newRecord = {
+        capacity: req.body.capacity,
+        checked: req.body.checked,
+        data: req.body.data
+    };
+
+    MongoClient.connect(url, function(err, mongoclient) {
+        mongoclient
+            .db(databaseName)
+            .collection(collectionName)
+            .replaceOne(
+                { _id },
+                newRecord )
+            .then( _ => {
+                mongoclient.close();
+                res.send("ok");
+            });
+    });
+}
 
 async function presentCount(err, mongoclient, res) {
     let count = await getCount(mongoclient);
@@ -100,7 +109,7 @@ async function getCount(mongoclient) {
 async function setupDb(err, mongoclient, response) {
     console.log("Setup Db");
 
-    let data = 'a'.repeat(500000);
+    let data = 'a'.repeat(500);
 
     let seedData = [
         { _id: 'record0001', capacity: 3, checked: false, data: data },
@@ -115,14 +124,13 @@ async function setupDb(err, mongoclient, response) {
     await db
         .collection(collectionName)
         .drop(function(err, delOK) {
-            console.log("doing drop");
+            console.log("Dropping collection");
 
             if (err && err.codeName == 'NamespaceNotFound') {
                 console.log("Namespace not found, no need to drop");
                 return;
             }
 
-            console.log("got here unexpectadly");
             if (err) throw err;
             if (delOK) console.log("Collection deleted");
             if (!delOK) console.log("Something went wrong deleting the collection?");

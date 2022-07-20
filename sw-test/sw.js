@@ -136,8 +136,6 @@ self.addEventListener("install", (event) => {
 
 
 const matchRequestsForVersionFile = async (event) => {
-    // console.log("event.request.url: " + event.request.url);
-
     try {
         const liveResponse = await fetch(event.request.url);
 
@@ -164,7 +162,7 @@ const matchRequestsForVersionFile = async (event) => {
 }
 
 
-const newAsyncFunction = (event) => {
+const getRequestResponse = (event) => {
     const versionUrl = self.origin + "/sw-test/version";
     if (event.request.url == versionUrl) {
         return matchRequestsForVersionFile(event);
@@ -177,7 +175,7 @@ const newAsyncFunction = (event) => {
 // Makes it so all fetch events are intercepted with a response from the cache
 self.addEventListener('fetch', (event) => {
     // console.log(event.request.url);
-    event.respondWith(newAsyncFunction(event));
+    event.respondWith(getRequestResponse(event));
 });
 
 

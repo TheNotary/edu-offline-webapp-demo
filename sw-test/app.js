@@ -9,10 +9,12 @@ import {
 // This file binds the js functions to the buttons in the HTML form for
 // interacting with the database.
 let btnAdd = document.querySelector("#btnAdd"),
+    btnDownloadRecords = document.querySelector("#btnDownloadRecords"),
     btnSync = document.querySelector("#btnSync"),
     btnVersionCheck = document.querySelector("#btnVersionCheck"),
     btnSetupOnlineDb = document.querySelector("#btnSetupOnlineDb"),
     ulRecordList = document.querySelector("#recordList"),
+    ulRemoteRecordList = document.querySelector("#ulRemoteRecordList"),
     spanVersion = document.querySelector("#version"),
     spanCount = document.querySelector("#count"),
     spanRemoteCount = document.querySelector("#spanRemoteCount"),
@@ -21,13 +23,21 @@ let btnAdd = document.querySelector("#btnAdd"),
     divTotalCapacity = document.querySelector("#divTotalCapacity"),
     btnDropLocalDb = document.querySelector("#btnDropLocalDb");
 
+const attachScriptsToDom = () => {
+    btnVersionCheck.addEventListener("click", refreshAppVersion);
+    btnAdd.addEventListener("click", btnAdd_clicked);
+    btnDropLocalDb.addEventListener("click", btnDropLocalDb_clicked);
+    btnSync.addEventListener("click", btnSync_clicked);
+    btnSetupOnlineDb.addEventListener("click", btnSetupOnlineDb_clicked);
+    btnDownloadRecords.addEventListener("click", btnDownloadRecords_clicked);
+}
 
 // Add a record to the database
 async function btnAdd_clicked() {
     let currentCount = await getCount();
     let id = ((currentCount + 1) + "").padStart(4, '0');
     let recordName = 'record' + id;
-    let data = 'a'.repeat(500000);  // Make the records pretty big to test application size limits in the browser
+    let data = 'a'.repeat(500);  // Make the records pretty big to test application size limits in the browser
 
     console.log(`Creating new record with name ${recordName}`);
     set(recordName, '{"capacity": 3, "checked": false, "unsynced": false, "data": "' + data + '"}');
@@ -39,6 +49,11 @@ async function btnAdd_clicked() {
 const refreshUI = async () => {
     window.appVersion = await refreshAppVersion();
     refreshCacheTime(appVersion);
+
+    // Remote
+    refreshRemoteCount();
+
+    // Local
     refreshMode();
     refreshCount();
     refreshList();
@@ -49,16 +64,21 @@ async function refreshMode() {
     spanMode.innerHTML = "online";
 }
 
-
-async function checkConnectivity() {
-    fetch('/health')
-        .then( resp => {
-            console.log("It's online?");
-            console.log(resp.text());
-        })
-        .catch( err => {
-            console.log("Error");
-        })
+// returns true if we have connectivity to the backend
+const checkConnectivity = async () => {
+    return new Promise( resolve => {
+        fetch('/health')
+            .then( response => response.text())
+            .then( text => {
+                console.log(`Server Status: [${text}]`);
+                if (text == "up")
+                    resolve(true);
+                resolve(false);
+            })
+            .catch( err => {
+                resolve(false);
+            })
+    });
 }
 
 
@@ -87,6 +107,11 @@ async function refreshCacheTime(appVersion) {
     }
     const timeCached = await resp.text();
     spanCacheDate.innerHTML = timeCached;
+}
+
+
+async function refreshRemoteCount() {
+    spanRemoteCount.innerHTML = await getRemoteCount();
 }
 
 async function refreshCount() {
@@ -142,6 +167,11 @@ async function getTotalCapacity() {
     });
 }
 
+
+async function getRemoteCount() {
+    return fetch('/records/count').then( r => r.text());
+}
+
 async function getCount() {
     const records = await keys();
     return records.length;
@@ -149,9 +179,39 @@ async function getCount() {
 
 // Sync local data with web app
 function btnSync_clicked() {
-    alert('TODO: sync the db stuff');
+    // iterate over all local data
+    entries()
+        .then((entries) => {
+            for (const entry of entries) {
+                const key = entry[0];
+                const record = JSON.parse(entry[1]);
+                const checkStatus = record["checked"];
+                const unsynced = record["unsynced"];
 
+                // upload the record, and set it to synced locally if it's been marked as unsynced
+                if (unsynced) {
+                    postRecord(key, record)
+                        .then( _ => {
+                            console.log(`Finished post of ${key}.`)
+                            record["unsynced"] = false;
+                            set(key, JSON.stringify(record));
+                        });
+                }
 
+            }
+        });
+
+}
+
+async function postRecord(key, record) {
+    fetch(`/records/${key}`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' },
+            body: JSON.stringify(record)
+        }
+    );
 }
 
 function btnDropLocalDb_clicked() {
@@ -161,8 +221,25 @@ function btnDropLocalDb_clicked() {
 }
 
 function btnSetupOnlineDb_clicked() {
+    fetch('/setup', { method: 'POST' });
+    refreshUI();
+}
+
+async function btnDownloadRecords_clicked() {
     console.log("btnSetupOnlineDb_clicked clicked");
 
+    // Get all the records
+    let recordsJson = await fetch("/records").then( r => r.text() );
+    const records = JSON.parse(recordsJson);
+
+    // Install the records locally
+    records.forEach( record => {
+        const _id = record._id;
+        delete record._id;
+        set(_id, JSON.stringify(record));
+    });
+
+    refreshUI();
 }
 
 
@@ -190,16 +267,9 @@ const chk = async (event, recordId) => {
     refreshList();
 }
 
-const attachScriptsToDom = () => {
-    btnVersionCheck.addEventListener("click", refreshAppVersion);
-    btnAdd.addEventListener("click", btnAdd_clicked);
-    btnDropLocalDb.addEventListener("click", btnDropLocalDb_clicked);
-    btnSync.addEventListener("click", btnSync_clicked);
-    btnSetupOnlineDb.addEventListener("click", btnSetupOnlineDb_clicked);
-}
-
 // export globals...
 window.refreshUI = refreshUI;
 window.chk = chk;
+window.checkConnectivity = checkConnectivity;
 
-export { attachScriptsToDom, refreshUI, chk };
+export { attachScriptsToDom, refreshUI, chk, checkConnectivity };
