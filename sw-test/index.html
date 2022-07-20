@@ -6,36 +6,47 @@
 <script src="/sw-test/sw.js"></script>
 <link rel="shortcut icon" href="/sw-test/favicon.ico" />
 </head>
+<body><div class="pagewrap">
 
+<h1>Welcome to <span id="mode">online</span> mode!</h1>
 
+<div class="controls">
+  <h4>Server Controls</h4>
+  <div>App Version: <span id="version"></span> cached on <span id="cacheDate"></span></div>
 
-<body>
-  welcome to the version!
-<div>
+  <div class="controls">
+    <h4>Remote Data Controls</h4>
+    <div><button id="btnSetupOnlineDb">Setup Online DB</button></div>
+    <div>Record Count: <span id="spanRemoteCount"></span></div>
+  </div>
+</div>
+
+<div class="controls">
+  <h4>Client Controls</h4>
   <div>
     App Version: <span id="version"></span> cached on <span id="cacheDate"></span>
   </div>
-  <div>
-    Count: <span id="count"></span>
+  <div><button id="btnSync">Sync</button></div>
+  <div><button id="btnVersionCheck">Check Version</button></div>
+  <div><button id="btnDropLocalDb">Drop DB</button></div>
+
+  <div class="controls">
+    <h4>Local Data Controls</h4>
+    <div><button id="btnAdd">Add Record</button></div>
+    <div>Record Count: <span id="count"></span></div>
+    <ul id="recordList"></ul>
+    <div id="divTotalCapacity"></div>
   </div>
 </div>
 
-<div id="controls">
-  <div><button id="btnAdd">Add Record</button></div>
-  <div><button id="btnSync">Sync</button></div>
-  <div><button id="btnVersionCheck">Check Version</button></div>
-  <div><button id="btnDropDb">Drop DB</button></div>
-</div>
 
-<div>
-  <ul id="recordList"></ul>
-  <div id="divTotalCapacity"></div>
-</div>
+</div></body>
+<!-- <script type="module" src="/sw-test/app.js"></script> -->
 
-</body>
-
-
-<script type="module" src="/sw-test/app.js">
+<script type="module">
+  import { attachScriptsToDom, refreshUI, chk } from '/sw-test/app.js';
+  attachScriptsToDom();
+  refreshUI();
 </script>
 
 </html>

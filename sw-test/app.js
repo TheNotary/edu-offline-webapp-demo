@@ -11,20 +11,15 @@ import {
 let btnAdd = document.querySelector("#btnAdd"),
     btnSync = document.querySelector("#btnSync"),
     btnVersionCheck = document.querySelector("#btnVersionCheck"),
+    btnSetupOnlineDb = document.querySelector("#btnSetupOnlineDb"),
     ulRecordList = document.querySelector("#recordList"),
     spanVersion = document.querySelector("#version"),
     spanCount = document.querySelector("#count"),
+    spanRemoteCount = document.querySelector("#spanRemoteCount"),
+    spanMode = document.querySelector("#mode"),
     spanCacheDate = document.querySelector("#cacheDate"),
     divTotalCapacity = document.querySelector("#divTotalCapacity"),
-    btnDropDb = document.querySelector("#btnDropDb");
-
-btnVersionCheck.addEventListener("click", refreshAppVersion);
-btnAdd.addEventListener("click", btnAdd_clicked);
-btnDropDb.addEventListener("click", btnDropDb_clicked);
-btnSync.addEventListener("click", btnSync_clicked);
-
-
-refreshUI();
+    btnDropLocalDb = document.querySelector("#btnDropLocalDb");
 
 
 // Add a record to the database
@@ -35,19 +30,37 @@ async function btnAdd_clicked() {
     let data = 'a'.repeat(500000);  // Make the records pretty big to test application size limits in the browser
 
     console.log(`Creating new record with name ${recordName}`);
-    set(recordName, '{"capacity": 1, "checked": false, "unsynced": false, "data": "' + data + '"}');
+    set(recordName, '{"capacity": 3, "checked": false, "unsynced": false, "data": "' + data + '"}');
 
     refreshUI();
 }
 
 // Lookup storage items
-async function refreshUI() {
+const refreshUI = async () => {
     window.appVersion = await refreshAppVersion();
     refreshCacheTime(appVersion);
+    refreshMode();
     refreshCount();
     refreshList();
     refreshTotalCapacity();
 }
+
+async function refreshMode() {
+    spanMode.innerHTML = "online";
+}
+
+
+async function checkConnectivity() {
+    fetch('/health')
+        .then( resp => {
+            console.log("It's online?");
+            console.log(resp.text());
+        })
+        .catch( err => {
+            console.log("Error");
+        })
+}
+
 
 // Check to see if we're using the latest version of the front-end
 async function refreshAppVersion() {
@@ -141,11 +154,17 @@ function btnSync_clicked() {
 
 }
 
-function btnDropDb_clicked() {
+function btnDropLocalDb_clicked() {
     console.log("Clearing DB.");
     clear();
     refreshUI();
 }
+
+function btnSetupOnlineDb_clicked() {
+    console.log("btnSetupOnlineDb_clicked clicked");
+
+}
+
 
 // Cleans up and returns the semver version to be printed on the screen, or
 // returns an error message that is printed to the screen
@@ -161,7 +180,7 @@ function cleanSemver(text) {
 
 // auditCheck, this function is fired anytime a record is "checked" meaning an
 // auditor has performed their auditing function on it, perhaps offline!
-window.chk = async (event, recordId) => {
+const chk = async (event, recordId) => {
     const record = await get(recordId);
     const obj = JSON.parse(record);
     obj["checked"] = event.target.checked;
@@ -170,3 +189,17 @@ window.chk = async (event, recordId) => {
     set(recordId, JSON.stringify(obj));
     refreshList();
 }
+
+const attachScriptsToDom = () => {
+    btnVersionCheck.addEventListener("click", refreshAppVersion);
+    btnAdd.addEventListener("click", btnAdd_clicked);
+    btnDropLocalDb.addEventListener("click", btnDropLocalDb_clicked);
+    btnSync.addEventListener("click", btnSync_clicked);
+    btnSetupOnlineDb.addEventListener("click", btnSetupOnlineDb_clicked);
+}
+
+// export globals...
+window.refreshUI = refreshUI;
+window.chk = chk;
+
+export { attachScriptsToDom, refreshUI, chk };
