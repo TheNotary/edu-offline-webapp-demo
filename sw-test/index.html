@@ -2,24 +2,33 @@
 <html>
 <head>
 <link rel="stylesheet" href="/sw-test/style.css">
+<script type="text/javascript" src="/sw-test/bower_components/crypto-js/crypto-js.js"></script>
 <script type="text/javascript" src="/sw-test/sha.js"></script>
 <script src="/sw-test/sw.js"></script>
 <link rel="shortcut icon" href="/sw-test/favicon.ico" />
 </head>
 <body><div class="pagewrap">
 
+<nav>
+  <button id="btnLogout">Logout</button>
+  <button id="btnClearLoginState">Clear Login State</button>
+</nav>
+
 <h1>Welcome to <span id="spanConnectivityMode">...</span> mode!</h1>
 
 <div>App Version: <span id="version"></span> cached on <span id="cacheDate"></span></div>
 
-<div class="controls" id="loginForm">
-  <div>User: <input type="text"/></div>
-  <div>Pass: <input type="password"/></div>
-  <div><button id="btnSetupOnlineDb">Setup Online DB</button></div>
+<div>You are <span id="spanLoginState"></span></div>
+
+
+<div class="login-controls">
+  <div>User: <input type="text" id="inputUser"     value="demo"     /></div>
+  <div>Pass: <input type="password" id="inputPass" value="password" /></div>
+  <div><button id="btnLogin">Login</button></div>
 </div>
 
 
-<div class="controls">
+<div class="app-controls">
   <h4>Server Controls</h4>
 
   <div class="controls">
@@ -31,7 +40,7 @@
   </div>
 </div>
 
-<div class="controls">
+<div class="app-controls">
   <h4>Client Controls</h4>
   <div>
     App Version: <span id="version"></span> cached on <span id="cacheDate"></span>
@@ -41,7 +50,7 @@
   <div><button id="btnVersionCheck">Check Version</button></div>
   <div><button id="btnDropLocalDb">Drop DB</button></div>
 
-  <div class="controls">
+  <div class="app-controls">
     <h4>Local Data Controls</h4>
     <div><button id="btnAdd">Add Record</button></div>
     <div>Record Count: <span id="count"></span></div>

@@ -2,8 +2,7 @@
 
 Imagine that you're building an app for auditors who need to inspect inventory at a location where they will have access to their laptop, but they won't be able to connect to the internet.  In such a situation, you might want to consider using Service Workers and Web Storage to create a user experience that allows your users to work with data offline and synchronize their work with the backend when they're in a location with connectivity.
 
-tl; dr, this is a demo for an app that allows a user to work with a system's data offline and allows the user's actions to be synchronized with the server when they're back online.
-
+This is a demo for an app that allows a user to work with a system's data offline and allows the user's actions to be synchronized with the server when they're back online.
 
 # TODO
 
@@ -13,9 +12,9 @@ x Get some indication whether you have loaded the latest version
 x Implement the database in idb-keyval
 x Investigate what it's like when chrome needs to grow beyond the 5mb soft cap
 x Implement a backend that syncs... I guess attach mongodb to the system...
-- Implement realtime connectivity testing
-- Implement online login
-- Implement offline login
+x Implement realtime connectivity testing
+x Implement online login
+x Implement offline login
 - Implement encryption at rest
 - Ensure syncing in offline mode is disabled/ won't do anything bad
 - Fix lingering HTTP errors when requesting resources while offline
@@ -44,7 +43,6 @@ docker run \
 	mongo
 ```
 
-
 ###### Backend - Install and Boot up the node.js backend
 
 Install/ run the backend/ static asset server in the root of this git repo:
@@ -72,10 +70,6 @@ Then shutdown the node application and refresh the browser.  The web app will in
 Now to prove the offline/ online capabilities of the demo, you'll want to start the node service.  Click the "Attempt Reconnection" button to allow the web application to connected to the backend.  You will be prompted to synchronize the offline interactions with the backend.
 
 
-
-
-
-
 # Implementation Notes and Summary
 
 ###### Caching
@@ -101,6 +95,10 @@ Some thought may need to be put into what kind of data is allowed "at rest" on t
 
 This is my first time using SHA.js.  It's the library responsible for creating a hash of the user's password.  This hash is used to symmetrically decrypt/ encrypt data in the offline database.  I haven't done anything to vet it's qualifications for encrypting actual production PHI data.  Nor have I put much thought in the actual encryption scheme being leveraged by the app, it just encrypts all data as it stores it in the offline DB, and decrypts it as it loads from there.  More research must be taken to determine the soundness of this scheme and gauge what level of security is being offered.  
 
+###### Security Controls
+
+The offline login needs to expire after a set time.  This should be as easy as deleting the decryption key from the storage, but was not pursued due to time constraints.  Most health care companies document 15min idle timers to be the approved application behavior generally.  
+
 ###### Offline Data Capacity
 
 Chrome currently supports 957,600 MB of storage on my local personal laptop.  Will the HDD on the client machine support that much storage?  Will the client have chrome configured in a way that supports an approximate Terrabyte of offline storage?  Will the client even allow the use of Chrome as opposed to more well tested browsers such as IE5?  Some thought may need to be put into
@@ -119,7 +117,7 @@ This was done in vanilla JS, but by the time I connected mongo, I was noticing a
 
 ###### Summary
 
-This was a fun experiment to see how far HTML5 and Offline Applications have come.  The technologies seem production ready, but there are strengths towards simply rolling a mobile application which if tolerated would increase the likelihood of finding talent to develop the app at with the only trade off being that employees would not be able to work offline from their laptops.  
+This was a fun experiment to see how far HTML5 and Offline Applications have come.  The technologies seem production ready, but there are strengths towards simply rolling a mobile application which if tolerated would increase the likelihood of finding talent to develop the app with the only trade off being that users would not be able to work from their laptops (possibly this is an even more ergonomic scenario?).  
 
 
 ## Refs

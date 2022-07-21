@@ -26,7 +26,7 @@ app.get('/', function(req, res){
 });
 
 app.route('/health').get(function(req, res) {
-    console.log("Responding to /health");
+    // console.log("Responding to /health");
     res.send("up");
 });
 
@@ -36,6 +36,20 @@ app.route('/setup').post(function(req, res) {
     MongoClient.connect(url, function(err, mongoclient) {
         setupDb(err, mongoclient, res);
     });
+});
+
+app.route('/login').post(function(req, res) {
+    console.log("Responding to /login");
+
+    // Not adding LDAP containers :)
+    if (  req.body.user == "demo" &&
+          req.body.pass == "password" ) {
+        res.send("ok");
+        return;
+    }
+
+    res.status(401)
+       .send("failed");
 });
 
 app.route('/records').get(function(req, res) {

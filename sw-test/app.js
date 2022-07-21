@@ -14,6 +14,11 @@ let btnAdd = document.querySelector("#btnAdd"),
     btnVersionCheck = document.querySelector("#btnVersionCheck"),
     btnSetupOnlineDb = document.querySelector("#btnSetupOnlineDb"),
     btnCheckConnectivity = document.querySelector("#btnCheckConnectivity"),
+    btnLogin = document.querySelector("#btnLogin"),
+    btnLogout = document.querySelector("#btnLogout"),
+    btnClearLoginState = document.querySelector("#btnClearLoginState"),
+    inputUser = document.querySelector("#inputUser"),
+    inputPass = document.querySelector("#inputPass"),
     ulRecordList = document.querySelector("#recordList"),
     ulRemoteRecordList = document.querySelector("#ulRemoteRecordList"),
     spanVersion = document.querySelector("#version"),
@@ -21,6 +26,7 @@ let btnAdd = document.querySelector("#btnAdd"),
     spanRemoteCount = document.querySelector("#spanRemoteCount"),
     spanConnectivityMode = document.querySelector("#spanConnectivityMode"),
     spanCacheDate = document.querySelector("#cacheDate"),
+    spanLoginState = document.querySelector("#spanLoginState"),
     divTotalCapacity = document.querySelector("#divTotalCapacity"),
     btnDropLocalDb = document.querySelector("#btnDropLocalDb");
 
@@ -32,7 +38,167 @@ const attachScriptsToDom = () => {
     btnSetupOnlineDb.addEventListener("click", btnSetupOnlineDb_clicked);
     btnDownloadRecords.addEventListener("click", btnDownloadRecords_clicked);
     btnCheckConnectivity.addEventListener("click", btnCheckConnectivity_clicked);
+    btnLogin.addEventListener("click", btnLogin_clicked);
+    btnLogout.addEventListener("click", btnLogout_clicked);
+    btnClearLoginState.addEventListener("click", btnClearLoginState_clicked);
 }
+
+function btnClearLoginState_clicked() {
+    window.sessionStorage.removeItem('symmetricKey');
+    window.localStorage.removeItem('loginHash');
+    refreshUI();
+}
+
+const btnLogin_clicked = async () => {
+    console.log("btnLogin clicked...");
+    const user = inputUser.value;
+    const pass = inputPass.value;
+
+    const loginState = getLoginState();
+    console.log("loginState: " + loginState);
+
+    if (loginState == 'unregistered') {
+        console.log("First login attempt detected, will try to connect to backend");
+        performTraditionalLoginAgainstBackend(user, pass);
+        return;
+    }
+
+    if (loginState == 'logged_out') {
+        // check if loginHash matches what we hash our password with
+        const usersLoginHash = createLoginHashForUseInLoginChecks(pass);
+        const existingLoginHash = window.localStorage.getItem('loginHash');
+
+        console.log("usersLoginHash: " + usersLoginHash);
+        console.log("existingLoginHash: " + existingLoginHash);
+
+        if (usersLoginHash != existingLoginHash) {
+            alert("Login Failed:  Password didn't match password used when originally registering with backend.");
+            return;
+        }
+
+        const symmetricKey = createSymmetricKeyForUseInEncryption(user + pass);
+        window.sessionStorage.setItem('symmetricKey', symmetricKey);
+        setUILoggedIn();
+        refreshUI();
+        return;
+    }
+    alert('this button should have been hidden...');
+};
+
+
+function performTraditionalLoginAgainstBackend(user, pass) {
+    fetch('/login',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json' },
+            body: `{ "user": "${user}", "pass": "${pass}"}`
+        })
+        .then( resp => resp.text() )
+        .then( text => {
+            if (text != "ok") {
+                throw "Something went wrong authenticating";
+            }
+
+            // We need to create and locally store a password hash to save
+            // as a registration value.
+            // In addition, we need to create a sessionStorage symmetricKey
+            // entry which can't be generated without the user putting in
+            // their password and logging in locally...
+            return createLoginHashForUseInLoginChecks(pass);
+        })
+        .then( loginHash => {
+            window.localStorage.setItem('loginHash', loginHash); // store the hash of the pass so we can validate offline logins
+            return createSymmetricKeyForUseInEncryption(user + pass);
+        })
+        .then( symmetricKey => {
+            // Perform OfflineLogin
+            window.sessionStorage.setItem('symmetricKey', symmetricKey);
+            console.log("login complete, login form should be hidden");
+            setUILoggedIn();
+            refreshUI();
+        });
+}
+
+const btnLogout_clicked = async () => {
+    console.log("btnLogout_clicked");
+    logout();
+}
+
+const logout = async () => {
+    window.sessionStorage.removeItem('symmetricKey');
+    setUILoggedOut();
+    refreshUI();
+};
+
+// default state
+function setUILoggedOut() {
+    // show the login-controls
+    const loginControls = document.getElementsByClassName('login-controls');
+    for (let el of loginControls) {
+        el.style.display = "block";
+    }
+
+    // hide the .app-controls
+    const appControls = document.getElementsByClassName('app-controls');
+    for (let el of appControls) {
+        el.style.display = "none";
+    }
+
+    // hide the logout button
+    btnLogout.style.display = "none";
+}
+
+const setUILoggedIn = () => {
+    console.log("Setting UI to logged in state");
+    // hide the login-controls
+    const loginControls = document.getElementsByClassName('login-controls');
+    for (let el of loginControls) {
+        el.style.display = "none";
+    }
+
+    // show the .app-controls
+    const appControls = document.getElementsByClassName('app-controls');
+    for (let el of appControls) {
+        el.style.display = "block";
+    }
+
+    // show the logout button
+    btnLogout.style.display = "block";
+}
+
+
+// before and we need to perform that action first
+// getLoginState => "unregistered", "logged_out", "logged_in"
+const getLoginState = () => {
+    // If we don't have a loginHash, then we've never logged into the backend
+    const loginHash = window.localStorage.getItem('loginHash');
+    if (loginHash == null) {
+        return "unregistered";
+    }
+
+    // If we don't have a symmetricKey in sessionStorage, we're logged out
+    const symmetricKey = window.sessionStorage.getItem('symmetricKey');
+    if (symmetricKey == null) {
+        return "logged_out";
+    }
+
+    // Else we're logged in
+    return "logged_in";
+};
+window.getLoginState = getLoginState;
+
+const createLoginHashForUseInLoginChecks = (pass) => {
+    const loginHashSalt = "0doRif%4j10spb12lhF";
+    const loginHash = passwordHash(pass + loginHashSalt);
+    return loginHash;
+};
+
+const createSymmetricKeyForUseInEncryption = (userPass) => {
+    const symmetricKeyHashSalt = "mnOtDCIj2#@3ijcDIjcdAF)f";
+    const symmetricKey = passwordHash(userPass + symmetricKeyHashSalt);
+    return symmetricKey;
+};
 
 // Add a record to the database
 async function btnAdd_clicked() {
@@ -51,6 +217,7 @@ async function btnAdd_clicked() {
 const refreshUI = async () => {
     window.appVersion = await refreshAppVersion();
     refreshCacheTime(appVersion);
+    refreshLoginState();
 
     // Remote
     refreshRemoteCount();
@@ -61,6 +228,18 @@ const refreshUI = async () => {
     refreshList();
     refreshTotalCapacity();
 }
+
+const refreshLoginState = async () => {
+    const loginState = getLoginState();
+    spanLoginState.innerHTML = loginState.replace("_", " ");
+
+    if (loginState == "logged_in") {
+        setUILoggedIn();
+        return;
+    }
+    setUILoggedOut();
+}
+window.refreshLoginState = refreshLoginState;
 
 const refreshConnectivityMode = async () => {
     const online = await checkConnectivity();
@@ -318,6 +497,31 @@ const beginOnlineChecks = async () => {
     const interval = setInterval( refreshConnectivityMode, 5000 );
 }
 
+
+const encryptTxt = (txt) => {
+    window.sessionStorage.setItem('symmetricKey', 'secret key 123')
+    const symmetricKey = window.sessionStorage.getItem('symmetricKey');
+
+    if (symmetricKey == null) {
+        console.error("symmetricKey was null, please login.");
+        return;
+    }
+
+    var cipherText = CryptoJS.AES.encrypt(txt, symmetricKey).toString();
+    return cipherText;
+}
+
+const decryptTxt = (cipherText) => {
+    window.sessionStorage.setItem('symmetricKey', 'secret key 123')
+    const symmetricKey = window.sessionStorage.getItem('symmetricKey');
+
+    // Decrypt
+    var bytes  = CryptoJS.AES.decrypt(cipherText, symmetricKey);
+    var clearText = bytes.toString(CryptoJS.enc.Utf8);
+    return clearText;
+}
+
+
 // export globals...
 window.refreshUI = refreshUI;
 window.chk = chk;
@@ -325,5 +529,10 @@ window.checkConnectivity = checkConnectivity;
 window.passwordHash = passwordHash;
 window.refreshConnectivityMode = refreshConnectivityMode;
 window.beginOnlineChecks = beginOnlineChecks;
+
+window.encryptTxt = encryptTxt;
+window.decryptTxt = decryptTxt;
+
+window.btnLogin_clicked = btnLogin_clicked;
 
 export { attachScriptsToDom, refreshUI, chk, checkConnectivity };
