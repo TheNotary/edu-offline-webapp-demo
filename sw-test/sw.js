@@ -127,7 +127,7 @@ self.addEventListener("install", (event) => {
             "/sw-test/sw.js",
             "/sw-test/favicon.ico",
             "/sw-test/idb-keyval.js",
-            "/sw-test/umd.js",
+            "/sw-test/sha.js",
             "/sm/e22387484eaba42e333cb9be4935436627dcdba2fc6a5817e932e652eb088e48.map",
             // "/sw-test/version",  // We can't cache this file, when we request it, we need to gracefully accept that it may not exist
         ])
@@ -174,6 +174,20 @@ const getRequestResponse = (event) => {
 
 // Makes it so all fetch events are intercepted with a response from the cache
 self.addEventListener('fetch', (event) => {
+    // Don't use caching for things outside the cache folder
+    const cachedBase1 = self.origin + "/sw-test";
+    const cachedBase2 = self.origin + "/sm";
+    if (   !event.request.url.includes(cachedBase1)
+        && !event.request.url.includes(cachedBase2) ) {
+        event.respondWith(
+            fetch(event.request)
+            .catch( err => {
+                console.log("Couldn't do fetch, we're probably just offline.")
+            })
+        );
+        return;
+    }
+
     // console.log(event.request.url);
     event.respondWith(getRequestResponse(event));
 });

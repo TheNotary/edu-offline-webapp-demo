@@ -1,21 +1,30 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<!-- <script src="/sw-test/umd.js"></script> -->
 <link rel="stylesheet" href="/sw-test/style.css">
+<script type="text/javascript" src="/sw-test/sha.js"></script>
 <script src="/sw-test/sw.js"></script>
 <link rel="shortcut icon" href="/sw-test/favicon.ico" />
 </head>
 <body><div class="pagewrap">
 
-<h1>Welcome to <span id="mode">online</span> mode!</h1>
+<h1>Welcome to <span id="spanConnectivityMode">...</span> mode!</h1>
+
+<div>App Version: <span id="version"></span> cached on <span id="cacheDate"></span></div>
+
+<div class="controls" id="loginForm">
+  <div>User: <input type="text"/></div>
+  <div>Pass: <input type="password"/></div>
+  <div><button id="btnSetupOnlineDb">Setup Online DB</button></div>
+</div>
+
 
 <div class="controls">
   <h4>Server Controls</h4>
-  <div>App Version: <span id="version"></span> cached on <span id="cacheDate"></span></div>
 
   <div class="controls">
     <h4>Remote Data Controls</h4>
+    <div><button id="btnCheckConnectivity">Check Connectivity</button></div>
     <div><button id="btnSetupOnlineDb">Setup Online DB</button></div>
     <div>Record Count: <span id="spanRemoteCount"></span></div>
     <ul id="ulRemoteRecordList"></ul>
@@ -49,6 +58,9 @@
   import { attachScriptsToDom, refreshUI, chk } from '/sw-test/app.js';
   attachScriptsToDom();
   refreshUI();
+  beginOnlineChecks();
+  refreshConnectivityMode();
+
 </script>
 
 </html>

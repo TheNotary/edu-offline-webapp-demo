@@ -13,12 +13,13 @@ let btnAdd = document.querySelector("#btnAdd"),
     btnSync = document.querySelector("#btnSync"),
     btnVersionCheck = document.querySelector("#btnVersionCheck"),
     btnSetupOnlineDb = document.querySelector("#btnSetupOnlineDb"),
+    btnCheckConnectivity = document.querySelector("#btnCheckConnectivity"),
     ulRecordList = document.querySelector("#recordList"),
     ulRemoteRecordList = document.querySelector("#ulRemoteRecordList"),
     spanVersion = document.querySelector("#version"),
     spanCount = document.querySelector("#count"),
     spanRemoteCount = document.querySelector("#spanRemoteCount"),
-    spanMode = document.querySelector("#mode"),
+    spanConnectivityMode = document.querySelector("#spanConnectivityMode"),
     spanCacheDate = document.querySelector("#cacheDate"),
     divTotalCapacity = document.querySelector("#divTotalCapacity"),
     btnDropLocalDb = document.querySelector("#btnDropLocalDb");
@@ -30,6 +31,7 @@ const attachScriptsToDom = () => {
     btnSync.addEventListener("click", btnSync_clicked);
     btnSetupOnlineDb.addEventListener("click", btnSetupOnlineDb_clicked);
     btnDownloadRecords.addEventListener("click", btnDownloadRecords_clicked);
+    btnCheckConnectivity.addEventListener("click", btnCheckConnectivity_clicked);
 }
 
 // Add a record to the database
@@ -54,44 +56,61 @@ const refreshUI = async () => {
     refreshRemoteCount();
 
     // Local
-    refreshMode();
+    // refreshConnectivityMode();
     refreshCount();
     refreshList();
     refreshTotalCapacity();
 }
 
-async function refreshMode() {
-    spanMode.innerHTML = "online";
+const refreshConnectivityMode = async () => {
+    const online = await checkConnectivity();
+    if (online) {
+        if (spanConnectivityMode.innerHTML != "online")
+            spanConnectivityMode.innerHTML = "online";
+        return;
+    }
+    if (spanConnectivityMode.innerHTML != "offline")
+        spanConnectivityMode.innerHTML = "offline";
 }
 
 // returns true if we have connectivity to the backend
 const checkConnectivity = async () => {
-    return new Promise( resolve => {
-        fetch('/health')
-            .then( response => response.text())
-            .then( text => {
-                console.log(`Server Status: [${text}]`);
-                if (text == "up")
-                    resolve(true);
-                resolve(false);
-            })
-            .catch( err => {
-                resolve(false);
-            })
-    });
+    try {
+        return new Promise( resolve => {
+
+            fetch('/health')
+                .then( response => response.text())
+                .then( text => {
+                    // console.log(`Server Status: [${text}]`);
+                    if (text == "up")
+                        resolve(true);
+                    resolve(false);
+                })
+                .catch( err => {
+                    resolve(false);
+                    return;
+                })
+        });
+    }
+    catch(e) {
+        console.log("got here...");
+        return false;
+    }
 }
 
 
 // Check to see if we're using the latest version of the front-end
 async function refreshAppVersion() {
     return new Promise(resolve => {
+
         fetch("/sw-test/version")
             .then(response => response.text())
             .then(text => {
                 let version = cleanSemver(text);
                 spanVersion.innerHTML = version;
                 resolve(version);
-            });
+            })
+            .catch( err => console.log(err));
     });
 }
 
@@ -169,7 +188,9 @@ async function getTotalCapacity() {
 
 
 async function getRemoteCount() {
-    return fetch('/records/count').then( r => r.text());
+    return fetch('/records/count')
+    .then( r => r.text())
+    .catch( err => console.log(err));
 }
 
 async function getCount() {
@@ -192,10 +213,12 @@ function btnSync_clicked() {
                 if (unsynced) {
                     postRecord(key, record)
                         .then( _ => {
-                            console.log(`Finished post of ${key}.`)
+                            // FIXME: I shouldn't get here when I sync offline, I should go to the catch
+                            console.log(`Finished post of ${key}.  Resyncing local state.`)
                             record["unsynced"] = false;
                             set(key, JSON.stringify(record));
-                        });
+                        })
+                        ;
                 }
 
             }
@@ -204,14 +227,24 @@ function btnSync_clicked() {
 }
 
 async function postRecord(key, record) {
-    fetch(`/records/${key}`,
-        {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json' },
-            body: JSON.stringify(record)
-        }
-    );
+    return new Promise( (resolve, reject) => {
+        fetch(`/records/${key}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json' },
+                body: JSON.stringify(record)
+            }
+        )
+        .catch( err => {
+            reject(err)
+            // if (err.message == 'Failed to fetch')
+            //     return;
+            // console.log("Failure posting record");
+            // console.log(err);
+        })
+        .then(resolve);
+    });
 }
 
 function btnDropLocalDb_clicked() {
@@ -242,6 +275,18 @@ async function btnDownloadRecords_clicked() {
     refreshUI();
 }
 
+async function btnCheckConnectivity_clicked() {
+    const connected = await checkConnectivity();
+    const status = connected ? "Online" : "Offline";
+    console.log("Currently " + status);
+}
+
+const passwordHash = (pass) => {
+  var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 10});
+  hashObj.update(pass);
+  var hash = hashObj.getHash("HEX");
+  return hash;
+}
 
 // Cleans up and returns the semver version to be printed on the screen, or
 // returns an error message that is printed to the screen
@@ -267,9 +312,18 @@ const chk = async (event, recordId) => {
     refreshList();
 }
 
+// checks if we're online and updates the header to indicate every 5 seconds
+// This could be matured way further but time constraints...
+const beginOnlineChecks = async () => {
+    const interval = setInterval( refreshConnectivityMode, 5000 );
+}
+
 // export globals...
 window.refreshUI = refreshUI;
 window.chk = chk;
 window.checkConnectivity = checkConnectivity;
+window.passwordHash = passwordHash;
+window.refreshConnectivityMode = refreshConnectivityMode;
+window.beginOnlineChecks = beginOnlineChecks;
 
 export { attachScriptsToDom, refreshUI, chk, checkConnectivity };
