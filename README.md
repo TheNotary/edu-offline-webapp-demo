@@ -1,4 +1,4 @@
-# Offline Website Demo
+# Offline WebApp Demo
 
 Imagine that you're building an app for auditors who need to inspect inventory at a location where they will have access to their laptop, but they won't be able to connect to the internet.  In such a situation, you might want to consider using Service Workers and Web Storage to create a user experience that allows your users to work with data offline and synchronize their work with the backend when they're in a location with connectivity.
 
@@ -35,7 +35,7 @@ Technologies required:
 
 ###### Backend - Boot up MongoDb
 
-Start mongo DB with unsafe username/ passwords.  The backend uses this, not the HTML5 web client.  
+Start mongo DB with unsafe username/ passwords.  The backend uses this, not the HTML5 web client.
 
 ```
 docker run \
@@ -87,19 +87,19 @@ To manually delete the cache...
 
 ###### Syncing
 
-Synchronization is a beast.  Ideally you would only have one place where the data ever resides, but because offline functionality is a requirement, thought must be put into how synchronization will take place under various scenarios: When data on the local machine is modified, and remote data is modified; when records are created on the client that conflict with records created on the remote; when upstream migrates it's data format entirely (maybe less of an issue with blah).  
+Synchronization is a beast.  Ideally you would only have one place where the data ever resides, but because offline functionality is a requirement, thought must be put into how synchronization will take place under various scenarios: When data on the local machine is modified, and remote data is modified; when records are created on the client that conflict with records created on the remote; when upstream migrates it's data format entirely (maybe less of an issue with blah).
 
 ###### Offline Data and PHI
 
-Some thought may need to be put into what kind of data is allowed "at rest" on the employees machine.  A data cleansing process may be required to protect the Private data of the client's users.  This demo encrypts all data at rest, but the data is only as safe as the employee's password.  At a minimum, password audits should be considered if cleaning PHI isn't possible.  
+Some thought may need to be put into what kind of data is allowed "at rest" on the employees machine.  A data cleansing process may be required to protect the Private data of the client's users.  This demo encrypts all data at rest, but the data is only as safe as the employee's password.  At a minimum, password audits should be considered if cleaning PHI isn't possible.
 
 ###### Crypto Library
 
-This is my first time using SHA.js.  It's the library responsible for creating a hash of the user's password.  This hash is used to symmetrically decrypt/ encrypt data in the offline database.  I haven't done anything to vet it's qualifications for encrypting actual production PHI data.  Nor have I put much thought in the actual encryption scheme being leveraged by the app, it just encrypts all data as it stores it in the offline DB, and decrypts it as it loads from there.  More research must be taken to determine the soundness of this scheme and gauge what level of security is being offered.  
+This is my first time using SHA.js.  It's the library responsible for creating a hash of the user's password.  This hash is used to symmetrically decrypt/ encrypt data in the offline database.  I haven't done anything to vet it's qualifications for encrypting actual production PHI data.  Nor have I put much thought in the actual encryption scheme being leveraged by the app, it just encrypts all data as it stores it in the offline DB, and decrypts it as it loads from there.  More research must be taken to determine the soundness of this scheme and gauge what level of security is being offered.
 
 ###### Security Controls
 
-The offline login needs to expire after a set time.  This should be as easy as deleting the decryption key from the storage, but was not pursued due to time constraints.  Most health care companies document 15min idle timers to be the approved application behavior generally.  
+The offline login needs to expire after a set time.  This should be as easy as deleting the decryption key from the storage, but was not pursued due to time constraints.  Most health care companies document 15min idle timers to be the approved application behavior generally.
 
 ###### Offline Data Capacity
 
@@ -107,19 +107,19 @@ Chrome currently supports 957,600 MB of storage on my local personal laptop.  Wi
 
 ###### Service Workers and IndexedDB Knowledge
 
-Service Workers rarely come up in the typical web developer life cycle.  It may not be possible to find labor comfortable using these technologies which are core to the type of application demonstrated herein.  
+Service Workers rarely come up in the typical web developer life cycle.  It may not be possible to find labor comfortable using these technologies which are core to the type of application demonstrated herein.
 
 ###### Offline Application Frameworks
 
-Before fleshing this out I did a quick search for offline application frameworks --a library called "up up" resulted.  That might be a better starting point than rolling your own Service Worker from scratch.  
+Before fleshing this out I did a quick search for offline application frameworks --a library called "up up" resulted.  That might be a better starting point than rolling your own Service Worker from scratch.
 
 ###### SPA Frameworks
 
-This was done in vanilla JS, but by the time I connected mongo, I was noticing a lot of calls to `refreshUI()` and a little JS templating for displaying data.  It would probably be nice to target a SPA framework that works well with the offline application framework selected so these noisy aspects of the demo can be pushed into the boilerplate portions of some SPA framework.  
+This was done in vanilla JS, but by the time I connected mongo, I was noticing a lot of calls to `refreshUI()` and a little JS templating for displaying data.  It would probably be nice to target a SPA framework that works well with the offline application framework selected so these noisy aspects of the demo can be pushed into the boilerplate portions of some SPA framework.
 
 ###### Summary
 
-This was a fun experiment to see how far HTML5 and Offline Applications have come.  The technologies seem production ready, but there are strengths towards simply rolling a mobile application which if tolerated would increase the likelihood of finding talent to develop the app with the only trade off being that users would not be able to work from their laptops (possibly this is an even more ergonomic scenario?).  
+This was a fun experiment to see how far HTML5 and Offline Applications have come.  The technologies seem production ready, but there are strengths towards simply rolling a mobile application which if tolerated would increase the likelihood of finding talent to develop the app with the only trade off being that users would not be able to work from their laptops (possibly this is an even more ergonomic scenario?).
 
 
 ## Refs
