@@ -6,6 +6,7 @@ This is a demo for an app that allows a user to work with a system's data offlin
 
 # TODO
 
+```
 x Implement offline browsing
 x Get caching figured out such that you can bump the version to bust the cache
 x Get some indication whether you have loaded the latest version
@@ -20,6 +21,7 @@ x Implement offline login
 - Fix lingering HTTP errors when requesting resources while offline
 x Do final writeup
 - Do final pass on usage documentation
+```
 
 # Usage
 
